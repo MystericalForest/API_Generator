@@ -1,4 +1,5 @@
 import xml.etree.ElementTree as ET
+import create_sql
 
 class Field:
     
@@ -54,6 +55,8 @@ def read_xml(filename):
         tmp=Table()
         tmp.parse_xml(child)
         print(tmp.select_text())
+        sql=create_sql.SQL(tmp)
+        sql.get_create_table_file()
 
 if __name__ == "__main__":
    read_xml("xml\\redapple.xml")
