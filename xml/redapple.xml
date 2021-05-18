@@ -1,0 +1,15 @@
+<tables>
+  <table>
+    <tablename>tast</tablename>
+	<fields>
+	  <field>
+	    <fieldname>task_id</fieldname>
+	    <fieldtype>int</fieldtype>
+	  </field>
+	  <field>
+	    <fieldname>description</fieldname>
+	    <fieldtype>varchar</fieldtype>
+	  </field>
+	</fields>
+  </table>
+</tables>
