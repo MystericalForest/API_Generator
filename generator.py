@@ -57,6 +57,8 @@ def read_xml(filename):
         print(tmp.select_text())
         sql=create_sql.SQL(tmp)
         sql.get_create_table_file()
+        config=create_sql.Config_file("host", "username", "password", "database")
+        config.get_create_config_file()
 
 if __name__ == "__main__":
    read_xml("xml\\redapple.xml")
