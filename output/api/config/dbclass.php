@@ -2,9 +2,9 @@
 class DBClass {
 
     private $host = "host";
-    private $username = "username";
-    private $password = "password";
-    private $database = "database";
+    private $username = "usr";
+    private $password = "psw123";
+    private $database = "db";
 
     public $connection;
 
