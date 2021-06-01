@@ -15,7 +15,28 @@
 		  </field>
 		  <field>
 			<fieldname>title</fieldname>
-			<fieldtype>varchar5</fieldtype>
+			<fieldtype>varchar</fieldtype>
+		  </field>
+		  <field>
+			<fieldname>description</fieldname>
+			<fieldtype>varchar</fieldtype>
+		  </field>
+		</fields>
+	  </table>
+	  <table>
+		<tablename>tents</tablename>
+		<fields>
+		  <field primary="yes">
+			<fieldname>tent_id</fieldname>
+			<fieldtype>int</fieldtype>
+		  </field>
+		  <field primary="yes">
+			<fieldname>tent_type</fieldname>
+			<fieldtype>int</fieldtype>
+		  </field>
+		  <field>
+			<fieldname>name</fieldname>
+			<fieldtype>varchar</fieldtype>
 		  </field>
 		  <field>
 			<fieldname>description</fieldname>
@@ -26,11 +47,11 @@
 	</tables>
 	<endpoints>
 		<api type="get_all">
-			<name>Get_tasks</name>
+			<name>get_tasks</name>
 			<table>task</table>
 		</api>
 		<api type="get_one">
-			<name>Get_task</name>
+			<name>get_task</name>
 			<table>task</table>
 		</api>
 	</endpoints>

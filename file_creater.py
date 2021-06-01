@@ -1,3 +1,5 @@
+import api
+
 class SQL:
     def __init__(self, tables):
         self._tables=tables
@@ -63,8 +65,24 @@ class CRUD_API_file:
 
         return rtn
 
-    def _get_insert_text(self):
-        sql="INSERT INTO `ra_tasks`('task_id', 'race_id', 'task_name', 'description') VALUES (\". $task_id. \", \". $race_id. \", '\". $task_name. \"', '\". $description. \"')\""
+    def _get_insert_text(self, table):
+        sql="INSERT INTO `" + table.table_name + "` ('"
+        for idx, field in enumerate(table.fields):
+            sql+= field.field_name
+            if idx<len(table.fields)-1:
+                sql+="', '"
+            else:
+                sql+="') VALUES ("
+        for idx, field in enumerate(table.fields):
+            if field.is_text_field():
+                sql+= "'\". $" + field.field_name + ". \"'"
+            else:
+                sql+= "\". $" + field.field_name + ". \""
+            if idx<len(table.fields)-1:
+                sql+=", "
+            else:
+                sql+=")\""
+
         return sql
 
     def _get_select_text(self, table):
@@ -96,8 +114,32 @@ class CRUD_API_file:
                 sql+=";"
         return sql
     
-    def _get_update_text(self):
-        sql="UPDATE `ra_tasks` SET `race_id`='\". $race_id. \"',`task_name`=\". $task_name. \",`description`='\". $description. \"' WHERE `task_id`=\". $task_id;"
+    def _get_update_text(self, table):
+        sql="UPDATE `" + table.table_name + "` SET "
+        for idx, field in enumerate(table.get_non_primary_fields()):
+            sql+= "`" + field.field_name + "`="
+            if field.is_text_field():
+                sql+= "'\". $" + field.field_name + ". \"'"
+            else:
+                sql+= "\". $" + field.field_name + ". \""
+            if idx<len(table.get_non_primary_fields())-1:
+                sql+=", "
+            else:
+                sql+=" WHERE "
+        for idx, field in enumerate(table.get_primary_fields()):
+            sql+= "`" + field.field_name + "`="
+            if field.is_text_field():
+                sql+= "'\". $" + field.field_name
+                if idx<len(table.get_primary_fields())-1:
+                    sql+=". \"', "
+                else:
+                    sql+=". \"';"
+            else:
+                sql+= "\". $" + field.field_name
+                if idx<len(table.get_primary_fields())-1:
+                    sql+=". \", "
+                else:
+                    sql+=";"
         return sql
 
     def _get_delete_text(self, table):
@@ -145,20 +187,73 @@ class CRUD_API_file:
         f.write("        $this->connection = $connection;\n    }\n\n    //C\n")
         f.write("    public function create(")
         f.write(self._get_all_fields(table))
-        f.write("){\n" + self._get_function_text(self._get_insert_text()))       
+        f.write("){\n" + self._get_function_text(self._get_insert_text(table)))       
         f.write("    }\n    //R\n    public function read(){\n")
         f.write(self._get_function_text(self._get_select_text(table)))
         f.write("    }\n    //R\n    public function read_one(")
         f.write(self._get_primary_fields(table))
         f.write("){\n")
         f.write(self._get_function_text(self._get_select_one_text(table)))
-        f.write("    }\n    //U\n    public function update(")
-        f.write(self._get_all_fields(table))
-        f.write("){\n" + self._get_function_text(self._get_update_text()) + "    }\n")
+        f.write("    }\n")
+        if len(table.get_non_primary_fields())==0:
+            f.write("\n    // No update function. This table only contains fileds, that are primary keys.\n\n")
+        else:
+            f.write("    //U\n    public function update(")
+            f.write(self._get_all_fields(table))
+            f.write("){\n" + self._get_function_text(self._get_update_text(table)) + "    }\n")
         f.write("    //D\n    public function delete(")
         f.write(self._get_primary_fields(table))
         f.write("){\n")
         f.write(self._get_function_text(self._get_delete_text(table)))
         f.write("    }\n}\n")
         f.close()
+
+    def create_api_file(self, table, api):
+        if api.api_type==api.api_type.GET_ONE:
+            self.create_get_one_api_file(table, api)
+
+    def create_get_one_api_file(self, table, api):
+        filename="output\\api\\" + api.api_name + ".php"
+        f = open(filename, "w")
+        f.write("<?php\n\nheader(\"Content-Type: application/json; charset=UTF-8\";\n")
+        for primary in table.get_primary_fields():
+            f.write("  if (isset($_GET['task']) && $_GET['task']!="") {\n")
+        f.write("    include_once 'config/dbclass.php';\n")
+        f.write("    include_once 'objects/" + table.table_name + ".php';\n\n")
+        f.write("    $task_id = $_GET['task'];\n\n")
+        f.write("    $dbclass = new DBClass();\n")
+        f.write("    $connection = $dbclass->getConnection();\n\n")
+        f.write("    $" + table.table_name + " = new " + table.table_name.capitalize() + "($connection);\n\n")
+        f.write("    $stmt = $" + table.table_name + "->read_one($task_id);\n")
+        f.write("    $count = $stmt->rowCount();\n\n")
+        f.write("    if($count > 0){\n\n\n")
+        f.write("      $tasks = array();\n")
+        f.write("      $tasks[\"body\"] = array();\n")
+        f.write("      $tasks[\"count\"] = $count;\n\n")
+        f.write("      while ($row = $stmt->fetch(PDO::FETCH_ASSOC)){\n\n")
+        f.write("        extract($row);\n")
+        f.write("        $p  = array(\n")
+        for idx, field in enumerate(table.fields):
+            f.write("          \"" + field.field_name + "\" => $" + field.field_name)
+            if idx<len(table.fields)-1:
+                f.write(",\n")
+            else:
+                f.write("\n")
+        f.write("        );\n\n\n")
+        f.write("        array_push($tasks[\"body\"], $p);\n")
+        f.write("      }\n\n")
+        f.write("      echo json_encode($tasks);\n")
+        f.write("    }\n\n")
+        f.write("    else {\n\n")
+        f.write("      echo json_encode(\n")
+        f.write("          array(\"body\" => array(), \"count\" => 0)\n")
+        f.write("      );\n")
+        f.write("    }\n")
+        f.write("  }\n")
+        f.write("  else {\n")
+        f.write("    echo json_encode(\n")
+        f.write("        array(\"body\" => array(), \"count\" => 0)\n")
+        f.write("    );\n")
+        f.write("  }\n")
+        f.write("?>\n")
         

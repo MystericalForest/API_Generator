@@ -18,7 +18,7 @@ class Task{
 
     //C
     public function create($task_id, $title, $description){
-        $query = "INSERT INTO `ra_tasks`('task_id', 'race_id', 'task_name', 'description') VALUES (". $task_id. ", ". $race_id. ", '". $task_name. "', '". $description. "')"
+        $query = "INSERT INTO `task` ('task_id', 'title', 'description') VALUES (". $task_id. ", '". $title. "', '". $description. "')"
 
         $stmt = $this->connection->prepare($query);
 
@@ -46,9 +46,9 @@ class Task{
 
         return $stmt;
     }
-    //U
+//U
     public function update($task_id, $title, $description){
-        $query = "UPDATE `ra_tasks` SET `race_id`='". $race_id. "',`task_name`=". $task_name. ",`description`='". $description. "' WHERE `task_id`=". $task_id;
+        $query = "UPDATE `task` SET `title`='". $title. "', `description`='". $description. "' WHERE `task_id`=". $task_id;
 
         $stmt = $this->connection->prepare($query);
 
